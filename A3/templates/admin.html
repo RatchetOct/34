@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>Montana — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --blue: #102B4E; --blue2: #163964; --bg: #f4f7f8; }
+    body { font-family: 'Barlow', sans-serif; background: var(--bg); }
+    .top-bar { background: var(--blue); height: 60px; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; }
+    .logo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; color: #fff; text-decoration: none; }
+    .nav-link { color: rgba(255,255,255,0.7); font-size: 14px; text-decoration: none; padding: 6px 12px; border-radius: 6px; }
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 24px; }
+    .page-title { font-size: 22px; font-weight: 700; color: var(--blue); margin-bottom: 2rem; }
+    .section { background: #fff; border-radius: 14px; padding: 1.5rem; border: 1px solid rgba(16,43,78,.08); margin-bottom: 1.5rem; }
+    .section-title { font-size: 16px; font-weight: 600; color: var(--blue); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f0f0f0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 12px; color: #888; font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
+    td { padding: 12px; border-bottom: 1px solid #f8f8f8; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-enabled { background: #e6f4ea; color: #2d7a3a; }
+    .badge-disabled { background: #fdecea; color: #c0392b; }
+    .badge-unread { background: #fff3e0; color: #b45309; }
+    .badge-read { background: #f0f0f0; color: #888; }
+    .btn { padding: 6px 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; font-family: 'Barlow', sans-serif; color: #555; }
+    .btn:hover { background: #f5f5f5; }
+    .btn-danger { border-color: #fdc5c5; color: #c0392b; }
+    .btn-danger:hover { background: #fdecea; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border-radius: 14px; padding: 1.5rem; border: 1px solid rgba(16,43,78,.08); text-align: center; }
+    .stat-num { font-size: 32px; font-weight: 700; color: var(--blue); }
+    .stat-label { font-size: 13px; color: #888; margin-top: 6px; }
+    .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .bar-label { font-size: 13px; color: #444; min-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-bg { flex: 1; background: #f0f4f8; border-radius: 6px; height: 10px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 6px; background: var(--blue); }
+    .bar-val { font-size: 13px; font-weight: 600; color: var(--blue); min-width: 28px; text-align: right; }
+    .add-form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 1rem; }
+    .add-form input { padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: 'Barlow', sans-serif; outline: none; }
+    .add-form input:focus { border-color: var(--blue); }
+    .add-form button { padding: 9px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'Barlow', sans-serif; cursor: pointer; }
+    .msg-text { font-size: 12px; color: #888; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+
+<header class="top-bar">
+  <a class="logo" href="/">MONTANA</a>
+  <a class="nav-link" href="/">← Tilbake til butikk</a>
+</header>
+
+<div class="wrap">
+  <h1 class="page-title">Admin-panel</h1>
+  <!-- statistikk kort -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num">{{ user_count }}</div>
+      <div class="stat-label">Registrerte brukere</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ order_count }}</div>
+      <div class="stat-label">Bestillinger</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ revenue | int }} kr</div>
+      <div class="stat-label">Total omsetning</div>
+    </div>
+  </div>
+
+  <!-- mest kjøpte produkter -->
+  <div class="section">
+    <div class="section-title">Mest kjøpte produkter</div>
+    {% for produkt in top_products %}
+    <div class="bar-row">
+      <div class="bar-label">{{ produkt.name }}</div>
+      <div class="bar-bg">
+        <div class="bar-fill" style="width: {{ (produkt.total_sold / top_products[0].total_sold * 100) | int }}%"></div>
+      </div>
+      <div class="bar-val">{{ produkt.total_sold }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- brukere -->
+  <div class="section">
+    <div class="section-title">Brukere</div>
+    <table>
+      <tr>
+        <th>Navn</th>
+        <th>E-post</th>
+        <th>Registrert</th>
+        <th>Status</th>
+        <th>Handling</th>
+      </tr>
+      {% for bruker in users %}
+      <tr>
+        <td>{{ bruker.name }}</td>
+        <td>{{ bruker.email }}</td>
+        <td>{{ bruker.created_at }}</td>
+        <td>
+          <span class="badge badge-{{ bruker.active }}">{{ bruker.active }}</span>
+        </td>
+        <td>
+          <button class="btn" onclick="toggleUser({{ bruker.id }}, this)">
+            {% if bruker.active == 'enabled' %}Deaktiver{% else %}Aktiver{% endif %}
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+
+
+
+
+  <script>
+    async function toggleUser(user_id, button) {
+    const response = await fetch('/api/admin/toggle_user', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ user_id })
+    });
+    const result = await response.json();
+    if (result.ok) {
+        location.reload();
+    }
+}
+  </script>
+</body>
+</html>
